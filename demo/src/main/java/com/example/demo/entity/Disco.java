@@ -13,10 +13,10 @@ public class Disco {
     @Column(nullable = false)
     private String estado;
     
-    @Column(name = "horas_uso", nullable = false)
+    @Column(name = "horas_uso")
     private Integer horasUso;
     
-    // Constructores
+    // Constructors
     public Disco() {}
     
     public Disco(Long id, String estado, Integer horasUso) {
@@ -25,7 +25,7 @@ public class Disco {
         this.horasUso = horasUso;
     }
     
-    // Getters y Setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -49,4 +49,4 @@ public class Disco {
     public void setHorasUso(Integer horasUso) {
         this.horasUso = horasUso;
     }
-} 
+}

@@ -10,83 +10,52 @@ import java.util.Optional;
 
 @Service
 public class DiscoService {
-    
+
+    private final DiscoRepository discoRepository;
+
     @Autowired
-    private DiscoRepository discoRepository;
-    
-    public List<Disco> getAllDiscos() {
+    public DiscoService(DiscoRepository discoRepository) {
+        this.discoRepository = discoRepository;
+    }
+
+    public List<Disco> findAll() {
         return discoRepository.findAll();
     }
-    
-    public Optional<Disco> getDiscoById(Long id) {
+
+    public Optional<Disco> findById(Long id) {
         return discoRepository.findById(id);
     }
-    
-    public Disco createDisco(Disco disco) {
-        if (disco.getHorasUso() == null) {
-            disco.setHorasUso(0);
-        }
-        if (disco.getEstado() == null) {
-            disco.setEstado("disponible");
-        }
-        return discoRepository.save(disco);
-    }
-    
-    public Disco updateDisco(Long id, Disco discoDetails) {
-        Disco disco = discoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Disco no encontrado"));
-        
-        disco.setEstado(discoDetails.getEstado());
-        disco.setHorasUso(discoDetails.getHorasUso());
-        
-        return discoRepository.save(disco);
-    }
-    
-    public void deleteDisco(Long id) {
-        discoRepository.deleteById(id);
-    }
-    
-    public List<Disco> getDiscosByEstado(String estado) {
+
+    public List<Disco> findByEstado(String estado) {
         return discoRepository.findByEstado(estado);
     }
-    
-    public List<Disco> getDiscosDisponibles() {
-        return discoRepository.findByEstadoIgnoreCase("disponible");
-    }
-    
-    public List<Disco> getDiscosByHorasUsoGreaterThan(Integer horas) {
-        return discoRepository.findByHorasUsoGreaterThan(horas);
-    }
-    
-    public List<Disco> getDiscosByHorasUsoLessThan(Integer horas) {
-        return discoRepository.findByHorasUsoLessThan(horas);
-    }
-    
-    public List<Disco> getDiscosByHorasUsoBetween(Integer horasMin, Integer horasMax) {
-        return discoRepository.findByHorasUsoBetween(horasMin, horasMax);
-    }
-    
-    public Disco actualizarHorasUso(Long id, Integer horasAdicionales) {
-        Disco disco = discoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Disco no encontrado"));
-        
-        disco.setHorasUso(disco.getHorasUso() + horasAdicionales);
+
+    public Disco save(Disco disco) {
         return discoRepository.save(disco);
     }
-    
-    public Disco cambiarEstado(Long id, String nuevoEstado) {
-        Disco disco = discoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Disco no encontrado"));
-        
-        disco.setEstado(nuevoEstado);
-        return discoRepository.save(disco);
+
+    public void deleteById(Long id) {
+        discoRepository.deleteById(id);
     }
-    
-    public boolean existsByEstado(String estado) {
-        return discoRepository.existsByEstado(estado);
+
+    public Disco actualizarEstado(Long id, String nuevoEstado) {
+        Optional<Disco> discoOpt = discoRepository.findById(id);
+        if (discoOpt.isPresent()) {
+            Disco disco = discoOpt.get();
+            disco.setEstado(nuevoEstado);
+            return discoRepository.save(disco);
+        }
+        return null;
     }
-    
-    public long countByEstado(String estado) {
-        return discoRepository.countByEstado(estado);
+
+    public Disco incrementarHorasUso(Long id, Integer horasAdicionales) {
+        Optional<Disco> discoOpt = discoRepository.findById(id);
+        if (discoOpt.isPresent()) {
+            Disco disco = discoOpt.get();
+            Integer horasActuales = disco.getHorasUso() != null ? disco.getHorasUso() : 0;
+            disco.setHorasUso(horasActuales + horasAdicionales);
+            return discoRepository.save(disco);
+        }
+        return null;
     }
-} 
+}

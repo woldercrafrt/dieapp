@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.entity.Maletin;
+import com.example.demo.entity.Disco;
 import com.example.demo.repository.MaletinRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,79 +12,53 @@ import java.util.Optional;
 
 @Service
 public class MaletinService {
-    
+
+    private final MaletinRepository maletinRepository;
+
     @Autowired
-    private MaletinRepository maletinRepository;
-    
-    public List<Maletin> getAllMaletines() {
+    public MaletinService(MaletinRepository maletinRepository) {
+        this.maletinRepository = maletinRepository;
+    }
+
+    public List<Maletin> findAll() {
         return maletinRepository.findAll();
     }
-    
-    public Optional<Maletin> getMaletinById(Long id) {
+
+    public Optional<Maletin> findById(Long id) {
         return maletinRepository.findById(id);
     }
-    
-    public Maletin createMaletin(Maletin maletin) {
-        if (maletin.getFechaEnvio() == null) {
-            maletin.setFechaEnvio(LocalDateTime.now());
-        }
-        return maletinRepository.save(maletin);
-    }
-    
-    public Maletin updateMaletin(Long id, Maletin maletinDetails) {
-        Maletin maletin = maletinRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Maletín no encontrado"));
-        
-        maletin.setCliente(maletinDetails.getCliente());
-        maletin.setCajero(maletinDetails.getCajero());
-        maletin.setFechaEnvio(maletinDetails.getFechaEnvio());
-        maletin.setIdDisco(maletinDetails.getIdDisco());
-        maletin.setFechaEntrega(maletinDetails.getFechaEntrega());
-        
-        return maletinRepository.save(maletin);
-    }
-    
-    public void deleteMaletin(Long id) {
-        maletinRepository.deleteById(id);
-    }
-    
-    public List<Maletin> getMaletinesByCliente(String cliente) {
+
+    public List<Maletin> findByCliente(String cliente) {
         return maletinRepository.findByCliente(cliente);
     }
-    
-    public List<Maletin> getMaletinesByCajero(String cajero) {
+
+    public List<Maletin> findByCajero(String cajero) {
         return maletinRepository.findByCajero(cajero);
     }
-    
-    public List<Maletin> getMaletinesByIdDisco(Long idDisco) {
-        return maletinRepository.findByIdDisco(idDisco);
+
+    public List<Maletin> findByDisco(Disco disco) {
+        return maletinRepository.findByDisco(disco);
     }
-    
-    public List<Maletin> getMaletinesByFechaEnvio(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
-        return maletinRepository.findByFechaEnvioBetween(fechaInicio, fechaFin);
+
+    public List<Maletin> findByFechaEnvioBetween(LocalDateTime inicio, LocalDateTime fin) {
+        return maletinRepository.findByFechaEnvioBetween(inicio, fin);
     }
-    
-    public List<Maletin> getMaletinesByFechaEntrega(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
-        return maletinRepository.findByFechaEntregaBetween(fechaInicio, fechaFin);
-    }
-    
-    public List<Maletin> getMaletinesPendientes() {
-        return maletinRepository.findByFechaEntregaIsNull();
-    }
-    
-    public List<Maletin> getMaletinesEntregados() {
-        return maletinRepository.findByFechaEntregaIsNotNull();
-    }
-    
-    public Maletin entregarMaletin(Long id) {
-        Maletin maletin = maletinRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Maletín no encontrado"));
-        
-        maletin.setFechaEntrega(LocalDateTime.now());
+
+    public Maletin save(Maletin maletin) {
         return maletinRepository.save(maletin);
     }
-    
-    public boolean existsByIdDisco(Long idDisco) {
-        return maletinRepository.existsByIdDisco(idDisco);
+
+    public void deleteById(Long id) {
+        maletinRepository.deleteById(id);
     }
-} 
+
+    public Maletin registrarEntrega(Long id) {
+        Optional<Maletin> maletinOpt = maletinRepository.findById(id);
+        if (maletinOpt.isPresent()) {
+            Maletin maletin = maletinOpt.get();
+            maletin.setFechaEntrega(LocalDateTime.now());
+            return maletinRepository.save(maletin);
+        }
+        return null;
+    }
+}

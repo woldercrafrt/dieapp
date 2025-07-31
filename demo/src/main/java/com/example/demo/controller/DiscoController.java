@@ -3,101 +3,83 @@ package com.example.demo.controller;
 import com.example.demo.entity.Disco;
 import com.example.demo.service.DiscoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/discos")
-@CrossOrigin(origins = "*")
 public class DiscoController {
-    
+
+    private final DiscoService discoService;
+
     @Autowired
-    private DiscoService discoService;
-    
+    public DiscoController(DiscoService discoService) {
+        this.discoService = discoService;
+    }
+
     @GetMapping
     public ResponseEntity<List<Disco>> getAllDiscos() {
-        return ResponseEntity.ok(discoService.getAllDiscos());
+        return ResponseEntity.ok(discoService.findAll());
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<Disco> getDiscoById(@PathVariable Long id) {
-        return discoService.getDiscoById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Disco> disco = discoService.findById(id);
+        return disco.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    
-    @PostMapping
-    public ResponseEntity<Disco> createDisco(@RequestBody Disco disco) {
-        return ResponseEntity.ok(discoService.createDisco(disco));
-    }
-    
-    @PutMapping("/{id}")
-    public ResponseEntity<Disco> updateDisco(@PathVariable Long id, @RequestBody Disco discoDetails) {
-        try {
-            Disco updatedDisco = discoService.updateDisco(id, discoDetails);
-            return ResponseEntity.ok(updatedDisco);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-    
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDisco(@PathVariable Long id) {
-        discoService.deleteDisco(id);
-        return ResponseEntity.ok().build();
-    }
-    
+
     @GetMapping("/estado/{estado}")
     public ResponseEntity<List<Disco>> getDiscosByEstado(@PathVariable String estado) {
-        return ResponseEntity.ok(discoService.getDiscosByEstado(estado));
+        List<Disco> discos = discoService.findByEstado(estado);
+        return ResponseEntity.ok(discos);
     }
-    
-    @GetMapping("/disponibles")
-    public ResponseEntity<List<Disco>> getDiscosDisponibles() {
-        return ResponseEntity.ok(discoService.getDiscosDisponibles());
+
+    @PostMapping
+    public ResponseEntity<Disco> createDisco(@RequestBody Disco disco) {
+        Disco nuevoDisco = discoService.save(disco);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoDisco);
     }
-    
-    @GetMapping("/horas-uso/mayor/{horas}")
-    public ResponseEntity<List<Disco>> getDiscosByHorasUsoGreaterThan(@PathVariable Integer horas) {
-        return ResponseEntity.ok(discoService.getDiscosByHorasUsoGreaterThan(horas));
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Disco> updateDisco(@PathVariable Long id, @RequestBody Disco disco) {
+        if (!discoService.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        disco.setId(id);
+        return ResponseEntity.ok(discoService.save(disco));
     }
-    
-    @GetMapping("/horas-uso/menor/{horas}")
-    public ResponseEntity<List<Disco>> getDiscosByHorasUsoLessThan(@PathVariable Integer horas) {
-        return ResponseEntity.ok(discoService.getDiscosByHorasUsoLessThan(horas));
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDisco(@PathVariable Long id) {
+        if (!discoService.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        discoService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
-    
-    @GetMapping("/horas-uso/rango")
-    public ResponseEntity<List<Disco>> getDiscosByHorasUsoBetween(
-            @RequestParam Integer horasMin,
-            @RequestParam Integer horasMax) {
-        return ResponseEntity.ok(discoService.getDiscosByHorasUsoBetween(horasMin, horasMax));
-    }
-    
-    @PostMapping("/{id}/actualizar-horas")
-    public ResponseEntity<Disco> actualizarHorasUso(@PathVariable Long id, @RequestParam Integer horasAdicionales) {
-        try {
-            Disco discoActualizado = discoService.actualizarHorasUso(id, horasAdicionales);
-            return ResponseEntity.ok(discoActualizado);
-        } catch (RuntimeException e) {
+
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Disco> actualizarEstado(@PathVariable Long id, @RequestParam String estado) {
+        Disco disco = discoService.actualizarEstado(id, estado);
+        if (disco != null) {
+            return ResponseEntity.ok(disco);
+        } else {
             return ResponseEntity.notFound().build();
         }
     }
-    
-    @PostMapping("/{id}/cambiar-estado")
-    public ResponseEntity<Disco> cambiarEstado(@PathVariable Long id, @RequestParam String nuevoEstado) {
-        try {
-            Disco discoActualizado = discoService.cambiarEstado(id, nuevoEstado);
-            return ResponseEntity.ok(discoActualizado);
-        } catch (RuntimeException e) {
+
+    @PatchMapping("/{id}/incrementar-horas")
+    public ResponseEntity<Disco> incrementarHorasUso(@PathVariable Long id, @RequestParam Integer horas) {
+        Disco disco = discoService.incrementarHorasUso(id, horas);
+        if (disco != null) {
+            return ResponseEntity.ok(disco);
+        } else {
             return ResponseEntity.notFound().build();
         }
     }
-    
-    @GetMapping("/estado/{estado}/count")
-    public ResponseEntity<Long> countByEstado(@PathVariable String estado) {
-        return ResponseEntity.ok(discoService.countByEstado(estado));
-    }
-} 
+}

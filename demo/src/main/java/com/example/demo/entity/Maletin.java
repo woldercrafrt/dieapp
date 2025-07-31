@@ -17,28 +17,35 @@ public class Maletin {
     @Column(nullable = false)
     private String cajero;
     
-    @Column(name = "fecha_envio", nullable = false)
+    @Column(name = "fecha_envio")
     private LocalDateTime fechaEnvio;
     
-    @Column(name = "id_disco", nullable = false)
-    private Long idDisco;
+    @ManyToOne
+    @JoinColumn(name = "id_disco", nullable = false)
+    private Disco disco;
     
     @Column(name = "fecha_entrega")
     private LocalDateTime fechaEntrega;
     
-    // Constructores
+    @PrePersist
+    protected void onCreate() {
+        fechaEnvio = LocalDateTime.now();
+    }
+    
+    // Constructors
     public Maletin() {}
     
-    public Maletin(Long id, String cliente, String cajero, LocalDateTime fechaEnvio, Long idDisco, LocalDateTime fechaEntrega) {
+    public Maletin(Long id, String cliente, String cajero, LocalDateTime fechaEnvio, 
+                 Disco disco, LocalDateTime fechaEntrega) {
         this.id = id;
         this.cliente = cliente;
         this.cajero = cajero;
         this.fechaEnvio = fechaEnvio;
-        this.idDisco = idDisco;
+        this.disco = disco;
         this.fechaEntrega = fechaEntrega;
     }
     
-    // Getters y Setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -71,12 +78,12 @@ public class Maletin {
         this.fechaEnvio = fechaEnvio;
     }
     
-    public Long getIdDisco() {
-        return idDisco;
+    public Disco getDisco() {
+        return disco;
     }
     
-    public void setIdDisco(Long idDisco) {
-        this.idDisco = idDisco;
+    public void setDisco(Disco disco) {
+        this.disco = disco;
     }
     
     public LocalDateTime getFechaEntrega() {
@@ -86,4 +93,4 @@ public class Maletin {
     public void setFechaEntrega(LocalDateTime fechaEntrega) {
         this.fechaEntrega = fechaEntrega;
     }
-} 
+}

@@ -1,8 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.Usuario;
-import com.example.demo.service.AuthenticationService;
+import com.example.demo.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,60 +12,78 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins = "*")
 public class UsuarioController {
-    
+
+    private final UsuarioService usuarioService;
+
     @Autowired
-    private AuthenticationService authenticationService;
-    
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
+
     @GetMapping
     public ResponseEntity<List<Usuario>> getAllUsuarios() {
-        // Este endpoint requeriría un servicio adicional para obtener todos los usuarios
-        // Por ahora, solo retornamos una lista vacía
-        return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(usuarioService.findAll());
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> getUsuarioById(@PathVariable Long id) {
-        // Este endpoint requeriría un servicio adicional
-        return ResponseEntity.notFound().build();
+        Optional<Usuario> usuario = usuarioService.findById(id);
+        return usuario.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    
+
     @GetMapping("/email/{email}")
     public ResponseEntity<Usuario> getUsuarioByEmail(@PathVariable String email) {
-        Optional<Usuario> usuario = authenticationService.findByEmail(email);
-        return usuario.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Usuario usuario = usuarioService.findByEmail(email);
+        if (usuario != null) {
+            return ResponseEntity.ok(usuario);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
-    
-    @GetMapping("/microsoft/{microsoftId}")
-    public ResponseEntity<Usuario> getUsuarioByMicrosoftId(@PathVariable String microsoftId) {
-        Optional<Usuario> usuario = authenticationService.findByMicrosoftId(microsoftId);
-        return usuario.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+
+    @PostMapping
+    public ResponseEntity<Usuario> createUsuario(@RequestBody Usuario usuario) {
+        Usuario nuevoUsuario = usuarioService.save(usuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
     }
-    
+
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> updateUsuario(@PathVariable Long id, @RequestBody Usuario usuarioDetails) {
-        // Este endpoint requeriría un servicio adicional
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Usuario> updateUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
+        if (!usuarioService.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        usuario.setId(id);
+        return ResponseEntity.ok(usuarioService.save(usuario));
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUsuario(@PathVariable Long id) {
-        // Este endpoint requeriría un servicio adicional
-        return ResponseEntity.notFound().build();
+        if (!usuarioService.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        usuarioService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
-    
-    @PostMapping("/{id}/activar")
-    public ResponseEntity<Usuario> activarUsuario(@PathVariable Long id) {
-        // Este endpoint requeriría un servicio adicional
-        return ResponseEntity.notFound().build();
+
+    @PatchMapping("/{id}/ultimo-acceso")
+    public ResponseEntity<Usuario> actualizarUltimoAcceso(@PathVariable Long id) {
+        Usuario usuario = usuarioService.actualizarUltimoAcceso(id);
+        if (usuario != null) {
+            return ResponseEntity.ok(usuario);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
-    
-    @PostMapping("/{id}/desactivar")
-    public ResponseEntity<Usuario> desactivarUsuario(@PathVariable Long id) {
-        // Este endpoint requeriría un servicio adicional
-        return ResponseEntity.notFound().build();
+
+    @PatchMapping("/{id}/activo")
+    public ResponseEntity<Usuario> cambiarEstadoActivo(@PathVariable Long id, @RequestParam Boolean activo) {
+        Usuario usuario = usuarioService.cambiarEstadoActivo(id, activo);
+        if (usuario != null) {
+            return ResponseEntity.ok(usuario);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
-} 
+}

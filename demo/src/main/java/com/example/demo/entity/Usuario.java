@@ -17,38 +17,39 @@ public class Usuario {
     @Column(name = "nombre_completo", nullable = false)
     private String nombreCompleto;
     
-    @Column(name = "microsoft_id", unique = true)
-    private String microsoftId;
-    
-    @Column(name = "fecha_registro", nullable = false)
+    @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
     
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;
     
-    @Column(name = "activo", nullable = false)
-    private Boolean activo = true;
+    @Column(nullable = false)
+    private Boolean activo;
     
-    @Column(name = "rol_usuario")
+    @Column(name = "rol_usuario", nullable = false)
     private String rolUsuario;
     
-    // Constructores
+    @PrePersist
+    protected void onCreate() {
+        fechaRegistro = LocalDateTime.now();
+        activo = true;
+    }
+    
+    // Constructors
     public Usuario() {}
     
-    public Usuario(Long id, String email, String nombreCompleto, String microsoftId, 
-                   LocalDateTime fechaRegistro, LocalDateTime ultimoAcceso, 
-                   Boolean activo, String rolUsuario) {
+    public Usuario(Long id, String email, String nombreCompleto, LocalDateTime fechaRegistro, 
+                 LocalDateTime ultimoAcceso, Boolean activo, String rolUsuario) {
         this.id = id;
         this.email = email;
         this.nombreCompleto = nombreCompleto;
-        this.microsoftId = microsoftId;
         this.fechaRegistro = fechaRegistro;
         this.ultimoAcceso = ultimoAcceso;
         this.activo = activo;
         this.rolUsuario = rolUsuario;
     }
     
-    // Getters y Setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -71,14 +72,6 @@ public class Usuario {
     
     public void setNombreCompleto(String nombreCompleto) {
         this.nombreCompleto = nombreCompleto;
-    }
-    
-    public String getMicrosoftId() {
-        return microsoftId;
-    }
-    
-    public void setMicrosoftId(String microsoftId) {
-        this.microsoftId = microsoftId;
     }
     
     public LocalDateTime getFechaRegistro() {
@@ -112,4 +105,4 @@ public class Usuario {
     public void setRolUsuario(String rolUsuario) {
         this.rolUsuario = rolUsuario;
     }
-} 
+}
