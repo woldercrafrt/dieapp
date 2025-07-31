@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DieApp - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>DieApp</h1>
+                <div class="user-info">
+                    <span id="userEmail">Cargando...</span>
+                    <button id="logoutBtn" class="btn btn-secondary">Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <aside class="sidebar">
+                <nav class="nav">
+                    <ul>
+                        <li><a href="#" data-section="dashboard" class="nav-link active">📊 Dashboard</a></li>
+                        <li><a href="#" data-section="maletines" class="nav-link">💼 Maletines</a></li>
+                        <li><a href="#" data-section="discos" class="nav-link">💿 Discos</a></li>
+                        <li><a href="#" data-section="usuarios" class="nav-link">👥 Usuarios</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="section active">
+                    <h2>Dashboard</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">💼</div>
+                            <div class="stat-info">
+                                <h3>Total Maletines</h3>
+                                <p class="stat-number" id="totalMaletines">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-info">
+                                <h3>Maletines Pendientes</h3>
+                                <p class="stat-number" id="maletinesPendientes">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">💿</div>
+                            <div class="stat-info">
+                                <h3>Total Discos</h3>
+                                <p class="stat-number" id="totalDiscos">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-info">
+                                <h3>Usuarios Activos</h3>
+                                <p class="stat-number" id="totalUsuarios">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-activity">
+                        <h3>Actividad Reciente</h3>
+                        <div class="activity-list" id="recentActivity">
+                            <p class="loading">Cargando actividad reciente...</p>
+                        </div>
+                    </div>
+                </section>
+
+        <!-- Maletines Section -->
+        <section id="maletines" class="content-section">
+            <div class="section-header">
+                <h2>Gestión de Maletines</h2>
+                <button class="btn btn-primary" id="addMaletinBtn">Agregar Maletín</button>
+            </div>
+            
+            <div class="filters">
+                <input type="text" id="clienteFilter" placeholder="Filtrar por cliente">
+                <input type="text" id="cajeroFilter" placeholder="Filtrar por cajero">
+                <button class="btn btn-secondary" id="filterMaletinesBtn">Filtrar</button>
+                <button class="btn btn-secondary" id="clearFiltersBtn">Limpiar</button>
+            </div>
+
+            <div class="table-container">
+                <table id="maletinesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Cajero</th>
+                            <th>Disco</th>
+                            <th>Fecha Envío</th>
+                            <th>Fecha Entrega</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Discos Section -->
+        <section id="discos" class="content-section">
+            <div class="section-header">
+                <h2>Gestión de Discos</h2>
+                <button class="btn btn-primary" id="addDiscoBtn">Agregar Disco</button>
+            </div>
+
+            <div class="table-container">
+                <table id="discosTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Estado</th>
+                            <th>Horas de Uso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Usuarios Section -->
+        <section id="usuarios" class="content-section">
+            <div class="section-header">
+                <h2>Gestión de Usuarios</h2>
+                <button class="btn btn-primary" id="addUsuarioBtn">Agregar Usuario</button>
+            </div>
+
+            <div class="table-container">
+                <table id="usuariosTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Nombre Completo</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal para Maletín -->
+    <div id="maletinModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="maletinModalTitle">Agregar Maletín</h3>
+            <form id="maletinForm">
+                <input type="hidden" id="maletinId">
+                <div class="form-group">
+                    <label for="cliente">Cliente:</label>
+                    <input type="text" id="cliente" required>
+                </div>
+                <div class="form-group">
+                    <label for="cajero">Cajero:</label>
+                    <input type="text" id="cajero" required>
+                </div>
+                <div class="form-group">
+                    <label for="discoSelect">Disco:</label>
+                    <select id="discoSelect" required></select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" id="cancelMaletinBtn">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Disco -->
+    <div id="discoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="discoModalTitle">Agregar Disco</h3>
+            <form id="discoForm">
+                <input type="hidden" id="discoId">
+                <div class="form-group">
+                    <label for="estado">Estado:</label>
+                    <select id="estado" required>
+                        <option value="">Seleccionar estado</option>
+                        <option value="Nuevo">Nuevo</option>
+                        <option value="Usado">Usado</option>
+                        <option value="Dañado">Dañado</option>
+                        <option value="En Reparación">En Reparación</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="horasUso">Horas de Uso:</label>
+                    <input type="number" id="horasUso" min="0" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" id="cancelDiscoBtn">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Usuario -->
+    <div id="usuarioModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="usuarioModalTitle">Agregar Usuario</h3>
+            <form id="usuarioForm">
+                <input type="hidden" id="usuarioId">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="emailUsuario" required>
+                </div>
+                <div class="form-group">
+                    <label for="nombreCompleto">Nombre Completo:</label>
+                    <input type="text" id="nombreCompleto" required>
+                </div>
+                <div class="form-group">
+                    <label for="rolUsuario">Rol:</label>
+                    <select id="rolUsuario" required>
+                        <option value="">Seleccionar rol</option>
+                        <option value="ROLE_USER">Usuario</option>
+                        <option value="ROLE_ADMIN">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="activo">Estado:</label>
+                    <select id="activo" required>
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" id="cancelUsuarioBtn">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

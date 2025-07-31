@@ -75,18 +75,22 @@ public class AuthController {
         if (authentication != null && authentication.isAuthenticated() && 
             !authentication.getPrincipal().equals("anonymousUser")) {
             
+            HashMap<String, Object> user = new HashMap<>();
+            user.put("email", authentication.getName());
+            user.put("authenticated", true);
+            
             HashMap<String, Object> response = new HashMap<>();
-            response.put("email", authentication.getName());
-            response.put("authenticated", true);
+            response.put("success", true);
+            response.put("user", user);
             
             return ResponseEntity.ok(response);
         }
         
-        return ResponseEntity.status(401).body(new AuthResponseDTO(
-            false,
-            "No autenticado",
-            null
-        ));
+        HashMap<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "No autenticado");
+        
+        return ResponseEntity.status(401).body(response);
     }
     
     @PostMapping("/logout")
