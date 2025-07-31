@@ -64,8 +64,8 @@ function initializeApp() {
 
 // Verificar autenticación
 function checkAuthentication() {
-    // Si estamos en la página de login o index, no verificar autenticación
-    if (window.location.pathname.includes('login.html') || window.location.pathname.includes('index.html')) {
+    // Si estamos en la página de login, no verificar autenticación
+    if (window.location.pathname.includes('login.html')) {
         return;
     }
     
