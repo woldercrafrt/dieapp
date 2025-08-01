@@ -1,6 +1,20 @@
 // Configuración de la API
 const API_BASE_URL = 'http://localhost:8080/api';
 
+// Función para obtener headers con token JWT
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
 // Estado global de la aplicación
 let currentUser = null;
 let maletines = [];
@@ -69,12 +83,15 @@ function checkAuthentication() {
         return;
     }
     
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
     fetch(`${API_BASE_URL}/auth/current-user`, {
         method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     })
     .then(response => {
         if (response.ok) {
@@ -98,6 +115,9 @@ function checkAuthentication() {
         // Solo mostrar error si no estamos en login
         if (!window.location.pathname.includes('login.html')) {
             console.error('Error de autenticación:', error);
+            // Limpiar token inválido
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userEmail');
             showNotification('Sesión expirada. Redirigiendo al login...', 'error');
             setTimeout(() => {
                 window.location.href = 'login.html';
@@ -280,10 +300,7 @@ function loadRecentActivity() {
 function loadMaletines() {
     return fetch(`${API_BASE_URL}/maletines`, {
         method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     })
     .then(response => {
         if (!response.ok) {
@@ -357,10 +374,7 @@ function renderMaletinesTable(data = maletines) {
 function loadDiscos() {
     return fetch(`${API_BASE_URL}/discos`, {
         method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     })
     .then(response => {
         if (!response.ok) {
@@ -425,10 +439,7 @@ function renderDiscosTable(data = discos) {
 function loadUsuarios() {
     return fetch(`${API_BASE_URL}/usuarios`, {
         method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     })
     .then(response => {
         if (!response.ok) {
@@ -633,6 +644,7 @@ function saveMaletin(e) {
     fetch(url, {
         method: method,
         headers: {
+            ...getAuthHeaders(),
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
@@ -667,6 +679,7 @@ function saveDisco(e) {
     fetch(url, {
         method: method,
         headers: {
+            ...getAuthHeaders(),
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
@@ -703,6 +716,7 @@ function saveUsuario(e) {
     fetch(url, {
         method: method,
         headers: {
+            ...getAuthHeaders(),
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
@@ -747,7 +761,8 @@ function editUsuario(id) {
 function deleteMaletin(id) {
     if (confirm('¿Estás seguro de que quieres eliminar este maletín?')) {
         fetch(`${API_BASE_URL}/maletines/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         })
         .then(() => {
             loadMaletines();
@@ -765,7 +780,8 @@ function deleteMaletin(id) {
 function deleteDisco(id) {
     if (confirm('¿Estás seguro de que quieres eliminar este disco?')) {
         fetch(`${API_BASE_URL}/discos/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         })
         .then(() => {
             loadDiscos();
@@ -783,7 +799,8 @@ function deleteDisco(id) {
 function deleteUsuario(id) {
     if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
         fetch(`${API_BASE_URL}/usuarios/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeaders()
         })
         .then(() => {
             loadUsuarios();
@@ -802,7 +819,8 @@ function deleteUsuario(id) {
 function registrarEntrega(id) {
     if (confirm('¿Confirmar la entrega de este maletín?')) {
         fetch(`${API_BASE_URL}/maletines/${id}/registrar-entrega`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            headers: getAuthHeaders()
         })
         .then(response => response.json())
         .then(() => {
@@ -821,12 +839,13 @@ function registrarEntrega(id) {
 // Logout
 function logout() {
     if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+        // Limpiar localStorage inmediatamente
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userEmail');
+        
         fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: getAuthHeaders()
         })
         .then(() => {
             showNotification('Sesión cerrada exitosamente', 'success');

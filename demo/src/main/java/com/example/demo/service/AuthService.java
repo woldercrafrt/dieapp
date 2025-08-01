@@ -7,21 +7,28 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Date;
+import javax.crypto.SecretKey;
 
 @Service
 public class AuthService {
 
     private final VerificationCodeService verificationCodeService;
     private final UsuarioService usuarioService;
+    private final JwtService jwtService;
 
     @Autowired
-    public AuthService(VerificationCodeService verificationCodeService, UsuarioService usuarioService) {
+    public AuthService(VerificationCodeService verificationCodeService, UsuarioService usuarioService, JwtService jwtService) {
         this.verificationCodeService = verificationCodeService;
         this.usuarioService = usuarioService;
+        this.jwtService = jwtService;
     }
 
     public void requestLoginCode(String email) {
@@ -43,7 +50,7 @@ public class AuthService {
         verificationCodeService.generateAndSendCode(email);
     }
 
-    public boolean verifyLoginCode(String email, String code) {
+    public String verifyLoginCode(String email, String code) {
         boolean isValid = verificationCodeService.verifyCode(email, code);
         
         if (isValid) {
@@ -55,14 +62,14 @@ public class AuthService {
                 usuario.setUltimoAcceso(LocalDateTime.now());
                 usuarioService.save(usuario);
                 
-                // Autenticar al usuario
-                authenticateUser(usuario);
+                // Generar token JWT
+                String token = jwtService.generateToken(email);
                 
-                return true;
+                return token;
             }
         }
         
-        return false;
+        return null;
     }
 
     private void authenticateUser(Usuario usuario) {

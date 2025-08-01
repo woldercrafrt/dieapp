@@ -46,20 +46,19 @@ public class AuthController {
     }
 
     @PostMapping("/verify-code")
-    public ResponseEntity<AuthResponseDTO> verifyLoginCode(@RequestBody AuthRequestDTO request) {
-        boolean isValid = authService.verifyLoginCode(request.getEmail(), request.getCode());
+    public ResponseEntity<?> verifyLoginCode(@RequestBody AuthRequestDTO request) {
+        String token = authService.verifyLoginCode(request.getEmail(), request.getCode());
         
-        AuthResponseDTO response;
-        
-        if (isValid) {
-            response = new AuthResponseDTO(
-                true,
-                "Autenticación exitosa",
-                request.getEmail()
-            );
+        if (token != null) {
+            HashMap<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Autenticación exitosa");
+            response.put("token", token);
+            response.put("email", request.getEmail());
+            
             return ResponseEntity.ok(response);
         } else {
-            response = new AuthResponseDTO(
+            AuthResponseDTO response = new AuthResponseDTO(
                 false,
                 "Código inválido o expirado",
                 request.getEmail()
