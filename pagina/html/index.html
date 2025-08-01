@@ -86,10 +86,28 @@
             </div>
             
             <div class="filters">
-                <input type="text" id="clienteFilter" placeholder="Filtrar por cliente">
-                <input type="text" id="cajeroFilter" placeholder="Filtrar por cajero">
-                <button class="btn btn-secondary" id="filterMaletinesBtn">Filtrar</button>
-                <button class="btn btn-secondary" id="clearFiltersBtn">Limpiar</button>
+                <div class="filter-inputs">
+                    <input type="text" id="clienteFilter" placeholder="Filtrar por cliente">
+                    <input type="text" id="sucursalFilter" placeholder="Filtrar por sucursal">
+                    <input type="text" id="cajeroFilter" placeholder="Filtrar por cajero">
+                    <select id="estadoFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="SIN_ENVIAR">Sin enviar</option>
+                        <option value="ENVIADO">Enviado</option>
+                        <option value="ENVIADO_SIN_RESPUESTA">Enviado sin respuesta</option>
+                        <option value="RECIBIDO">Recibido</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-filter" id="filterMaletinesBtn">
+                        <i class="icon-search"></i>
+                        Filtrar
+                    </button>
+                    <button class="btn btn-clear" id="clearFiltersBtn">
+                        <i class="icon-clear"></i>
+                        Limpiar
+                    </button>
+                </div>
             </div>
 
             <div class="table-container">
@@ -98,10 +116,11 @@
                         <tr>
                             <th>ID</th>
                             <th>Cliente</th>
+                            <th>Sucursal</th>
                             <th>Cajero</th>
                             <th>Disco</th>
                             <th>Fecha Envío</th>
-                            <th>Fecha Entrega</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -168,6 +187,10 @@
                 <div class="form-group">
                     <label for="cliente">Cliente:</label>
                     <input type="text" id="cliente" required>
+                </div>
+                <div class="form-group">
+                    <label for="sucursal">Sucursal:</label>
+                    <input type="text" id="sucursal" required>
                 </div>
                 <div class="form-group">
                     <label for="cajero">Cajero:</label>
@@ -249,6 +272,39 @@
                     <button type="button" class="btn btn-secondary" id="cancelUsuarioBtn">Cancelar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal para Cambiar Estado -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Cambiar Estado del Maletín</h3>
+            <div class="status-options">
+                <div class="status-option-card" onclick="selectStatus('SIN_ENVIAR')">
+                    <span class="status status-not-sent">Sin enviar</span>
+                    <p>El maletín aún no ha sido enviado</p>
+                </div>
+                <div class="status-option-card" onclick="selectStatus('ENVIADO')">
+                    <span class="status status-sent">Enviado</span>
+                    <p>El maletín ha sido enviado al destino</p>
+                </div>
+                <div class="status-option-card" onclick="selectStatus('ENVIADO_SIN_RESPUESTA')">
+                    <span class="status status-no-response">Enviado sin respuesta</span>
+                    <p>Enviado pero sin confirmación de recepción</p>
+                </div>
+                <div class="status-option-card" onclick="selectStatus('RECIBIDO')">
+                    <span class="status status-received">Recibido</span>
+                    <p>El maletín ha sido recibido y confirmado</p>
+                </div>
+                <div class="status-option-card" onclick="selectStatus('PROBLEMAS')">
+                    <span class="status status-problems">Problemas</span>
+                    <p>El maletín presenta algún problema o incidencia</p>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeStatusModal()">Cancelar</button>
+            </div>
         </div>
     </div>
 

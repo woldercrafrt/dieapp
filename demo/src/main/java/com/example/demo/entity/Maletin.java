@@ -17,6 +17,9 @@ public class Maletin {
     @Column(nullable = false)
     private String cajero;
     
+    @Column(nullable = false)
+    private String sucursal;
+    
     @Column(name = "fecha_envio")
     private LocalDateTime fechaEnvio;
     
@@ -27,22 +30,31 @@ public class Maletin {
     @Column(name = "fecha_entrega")
     private LocalDateTime fechaEntrega;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false)
+    private EstadoMaletin estado = EstadoMaletin.SIN_ENVIAR;
+    
     @PrePersist
     protected void onCreate() {
         fechaEnvio = LocalDateTime.now();
+        if (estado == null) {
+            estado = EstadoMaletin.SIN_ENVIAR;
+        }
     }
     
     // Constructors
     public Maletin() {}
     
-    public Maletin(Long id, String cliente, String cajero, LocalDateTime fechaEnvio, 
-                 Disco disco, LocalDateTime fechaEntrega) {
+    public Maletin(Long id, String cliente, String cajero, String sucursal, LocalDateTime fechaEnvio, 
+                 Disco disco, LocalDateTime fechaEntrega, EstadoMaletin estado) {
         this.id = id;
         this.cliente = cliente;
         this.cajero = cajero;
+        this.sucursal = sucursal;
         this.fechaEnvio = fechaEnvio;
         this.disco = disco;
         this.fechaEntrega = fechaEntrega;
+        this.estado = estado != null ? estado : EstadoMaletin.SIN_ENVIAR;
     }
     
     // Getters and Setters
@@ -70,6 +82,14 @@ public class Maletin {
         this.cajero = cajero;
     }
     
+    public String getSucursal() {
+        return sucursal;
+    }
+    
+    public void setSucursal(String sucursal) {
+        this.sucursal = sucursal;
+    }
+    
     public LocalDateTime getFechaEnvio() {
         return fechaEnvio;
     }
@@ -92,5 +112,13 @@ public class Maletin {
     
     public void setFechaEntrega(LocalDateTime fechaEntrega) {
         this.fechaEntrega = fechaEntrega;
+    }
+    
+    public EstadoMaletin getEstado() {
+        return estado;
+    }
+    
+    public void setEstado(EstadoMaletin estado) {
+        this.estado = estado;
     }
 }

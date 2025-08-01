@@ -106,6 +106,13 @@ function checkAuthentication() {
             // Extraer solo la parte antes del @ del email
             const username = data.user.email ? data.user.email.split('@')[0] : 'Usuario';
             document.getElementById('userEmail').textContent = username;
+            // Ocultar botón de usuarios si no es admin
+            if (!data.user.rolUsuario || data.user.rolUsuario !== 'ROLE_ADMIN') {
+                const usuariosNav = document.querySelector('a[data-section="usuarios"]');
+                if (usuariosNav) {
+                    usuariosNav.parentElement.style.display = 'none';
+                }
+            }
             loadDashboardData();
         } else {
             throw new Error('Respuesta inválida del servidor');
@@ -332,33 +339,68 @@ function renderMaletinesTable(data = maletines) {
     if (!tbody) return;
     
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No hay maletines registrados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data">No hay maletines registrados</td></tr>';
         return;
     }
     
     tbody.innerHTML = data.map(maletin => {
         const discoInfo = maletin.disco ? `#${maletin.disco.id} (${maletin.disco.estado})` : 'N/A';
-        const statusClass = maletin.fechaEntrega ? 'status-delivered' : 'status-pending';
-        const statusText = maletin.fechaEntrega ? 'Entregado' : 'Pendiente';
+        
+        // Determinar clase y texto del estado
+        let statusClass, statusText;
+        switch(maletin.estado) {
+            case 'SIN_ENVIAR':
+                statusClass = 'status-not-sent';
+                statusText = 'Sin enviar';
+                break;
+            case 'ENVIADO':
+                statusClass = 'status-sent';
+                statusText = 'Enviado';
+                break;
+            case 'ENVIADO_SIN_RESPUESTA':
+                statusClass = 'status-no-response';
+                statusText = 'Enviado sin respuesta';
+                break;
+            case 'RECIBIDO':
+                statusClass = 'status-received';
+                statusText = 'Recibido';
+                break;
+            case 'PROBLEMAS':
+                statusClass = 'status-problems';
+                statusText = 'Problemas';
+                break;
+            default:
+                statusClass = 'status-pending';
+                statusText = maletin.estado || 'Pendiente';
+        }
         
         return `
             <tr>
                 <td><strong>#${maletin.id}</strong></td>
                 <td>${maletin.cliente || 'N/A'}</td>
+                <td>${maletin.sucursal || 'N/A'}</td>
                 <td>${maletin.cajero || 'N/A'}</td>
                 <td>${discoInfo}</td>
                 <td>${formatDate(maletin.fechaEnvio)}</td>
                 <td>
-                    <span class="status ${statusClass}">${statusText}</span>
-                    ${maletin.fechaEntrega ? `<br><small>${formatDate(maletin.fechaEntrega)}</small>` : ''}
+                    <div class="status-display" onclick="openStatusModal(${maletin.id}, '${maletin.estado}')">
+                        <span class="status ${statusClass}">${statusText}</span>
+                        <span class="edit-icon">✏️</span>
+                    </div>
+                    ${maletin.fechaEntrega ? `<br><small>Entregado: ${formatDate(maletin.fechaEntrega)}</small>` : ''}
                 </td>
                 <td class="actions">
                     <button class="btn btn-sm btn-primary" onclick="editMaletin(${maletin.id})" title="Editar">
                         ✏️
                     </button>
-                    ${!maletin.fechaEntrega ? `
-                        <button class="btn btn-sm btn-success" onclick="registrarEntrega(${maletin.id})" title="Marcar como entregado">
+                    ${maletin.estado !== 'RECIBIDO' ? `
+                        <button class="btn btn-sm btn-success" onclick="registrarEntrega(${maletin.id})" title="Marcar como recibido">
                             ✅
+                        </button>
+                    ` : ''}
+                    ${maletin.estado === 'PROBLEMAS' ? `
+                        <button class="btn btn-sm btn-info" onclick="verDetallesProblema(${maletin.id})" title="Ver detalles del problema">
+                            📋
                         </button>
                     ` : ''}
                     <button class="btn btn-sm btn-danger" onclick="deleteMaletin(${maletin.id})" title="Eliminar">
@@ -502,24 +544,135 @@ function renderUsuariosTable(data = usuarios) {
 
 // Filtrar maletines
 function filterMaletines() {
-    const clienteFilter = document.getElementById('clienteFilter').value.toLowerCase();
-    const cajeroFilter = document.getElementById('cajeroFilter').value.toLowerCase();
+    const cliente = document.getElementById('clienteFilter').value.trim();
+    const sucursal = document.getElementById('sucursalFilter').value.trim();
+    const cajero = document.getElementById('cajeroFilter').value.trim();
+    const estado = document.getElementById('estadoFilter').value;
     
-    const filtered = maletines.filter(maletin => {
-        const matchCliente = !clienteFilter || maletin.cliente.toLowerCase().includes(clienteFilter);
-        const matchCajero = !cajeroFilter || maletin.cajero.toLowerCase().includes(cajeroFilter);
-        return matchCliente && matchCajero;
+    // Construir parámetros de consulta
+    const params = new URLSearchParams();
+    if (cliente) params.append('cliente', cliente);
+    if (sucursal) params.append('sucursal', sucursal);
+    if (cajero) params.append('cajero', cajero);
+    if (estado) params.append('estado', estado);
+    
+    const url = `${API_BASE_URL}/maletines/filtrar${params.toString() ? '?' + params.toString() : ''}`;
+    
+    fetch(url, {
+        method: 'GET',
+        headers: getAuthHeaders()
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        const filteredMaletines = Array.isArray(data) ? data : (data.data || []);
+        renderMaletinesTable(filteredMaletines);
+    })
+    .catch(error => {
+        console.error('Error filtrando maletines:', error);
+        showNotification('Error al filtrar maletines', 'error');
     });
-    
-    renderMaletinesTable(filtered);
 }
 
 // Limpiar filtros
 function clearFilters() {
     document.getElementById('clienteFilter').value = '';
+    document.getElementById('sucursalFilter').value = '';
     document.getElementById('cajeroFilter').value = '';
-    renderMaletinesTable(maletines);
+    document.getElementById('estadoFilter').value = '';
+    loadMaletines(); // Recargar todos los maletines
 }
+
+// Funciones para el modal de estado
+let currentMaletinId = null;
+
+function openStatusModal(maletinId, currentStatus) {
+    currentMaletinId = maletinId;
+    const modal = document.getElementById('statusModal');
+    
+    // Marcar el estado actual
+    document.querySelectorAll('.status-option-card').forEach(card => {
+        card.classList.remove('current-status');
+    });
+    
+    // Encontrar y marcar el estado actual
+    const statusMap = {
+        'SIN_ENVIAR': 0,
+        'ENVIADO': 1,
+        'ENVIADO_SIN_RESPUESTA': 2,
+        'RECIBIDO': 3,
+        'PROBLEMAS': 4
+    };
+    
+    const currentIndex = statusMap[currentStatus];
+    if (currentIndex !== undefined) {
+        const cards = document.querySelectorAll('.status-option-card');
+        if (cards[currentIndex]) {
+            cards[currentIndex].classList.add('current-status');
+        }
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeStatusModal() {
+    const modal = document.getElementById('statusModal');
+    modal.style.display = 'none';
+    currentMaletinId = null;
+}
+
+function selectStatus(newStatus) {
+    if (currentMaletinId) {
+        changeStatus(currentMaletinId, newStatus);
+        closeStatusModal();
+    }
+}
+
+// Función para ver detalles del problema
+function verDetallesProblema(maletinId) {
+    // Buscar el maletín por ID
+    const maletin = maletines.find(m => m.id === maletinId);
+    if (maletin) {
+        alert(`Detalles del problema para el maletín ${maletin.numero}:\n\nEstado: ${maletin.estado}\nFecha: ${new Date(maletin.fechaCreacion).toLocaleDateString()}\nDestino: ${maletin.destino}\n\nEste maletín presenta problemas que requieren atención.`);
+    }
+}
+
+// Cambiar estado del maletín
+function changeStatus(maletinId, newStatus, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    // Realizar la petición para cambiar el estado
+    fetch(`${API_BASE_URL}/maletines/${maletinId}/cambiar-estado`, {
+        method: 'PUT',
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'text/plain'
+        },
+        body: newStatus
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        showNotification('Estado actualizado correctamente', 'success');
+        loadMaletines(); // Recargar la tabla
+    })
+    .catch(error => {
+        console.error('Error cambiando estado:', error);
+        showNotification('Error al cambiar el estado', 'error');
+    });
+}
+
+
 
 // Configurar modales
 function setupModals() {
@@ -527,14 +680,22 @@ function setupModals() {
     document.querySelectorAll('.close').forEach(closeBtn => {
         closeBtn.addEventListener('click', (e) => {
             const modal = e.target.closest('.modal');
-            modal.style.display = 'none';
+            if (modal.id === 'statusModal') {
+                closeStatusModal();
+            } else {
+                modal.style.display = 'none';
+            }
         });
     });
     
     // Cerrar modales al hacer click fuera
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
-            e.target.style.display = 'none';
+            if (e.target.id === 'statusModal') {
+                closeStatusModal();
+            } else {
+                e.target.style.display = 'none';
+            }
         }
     });
 }
@@ -549,6 +710,7 @@ function openMaletinModal(maletin = null) {
         title.textContent = 'Editar Maletín';
         document.getElementById('maletinId').value = maletin.id;
         document.getElementById('cliente').value = maletin.cliente;
+        document.getElementById('sucursal').value = maletin.sucursal;
         document.getElementById('cajero').value = maletin.cajero;
         document.getElementById('discoSelect').value = maletin.disco.id;
     } else {
@@ -634,6 +796,7 @@ function saveMaletin(e) {
     const id = document.getElementById('maletinId').value;
     const data = {
         cliente: document.getElementById('cliente').value,
+        sucursal: document.getElementById('sucursal').value,
         cajero: document.getElementById('cajero').value,
         disco: { id: parseInt(document.getElementById('discoSelect').value) }
     };
@@ -653,7 +816,7 @@ function saveMaletin(e) {
     .then(() => {
         closeMaletinModal();
         loadMaletines();
-        if (appState.currentSection === 'dashboard') {
+        if (currentSection === 'dashboard') {
             loadDashboardData();
         }
     })
@@ -688,7 +851,7 @@ function saveDisco(e) {
     .then(() => {
         closeDiscoModal();
         loadDiscos();
-        if (appState.currentSection === 'dashboard') {
+        if (currentSection === 'dashboard') {
             loadDashboardData();
         }
     })
@@ -725,7 +888,7 @@ function saveUsuario(e) {
     .then(() => {
         closeUsuarioModal();
         loadUsuarios();
-        if (appState.currentSection === 'dashboard') {
+        if (currentSection === 'dashboard') {
             loadDashboardData();
         }
     })
@@ -785,7 +948,7 @@ function deleteDisco(id) {
         })
         .then(() => {
             loadDiscos();
-            if (appState.currentSection === 'dashboard') {
+            if (currentSection === 'dashboard') {
                 loadDashboardData();
             }
         })
@@ -804,7 +967,7 @@ function deleteUsuario(id) {
         })
         .then(() => {
             loadUsuarios();
-            if (appState.currentSection === 'dashboard') {
+            if (currentSection === 'dashboard') {
                 loadDashboardData();
             }
         })
@@ -825,7 +988,7 @@ function registrarEntrega(id) {
         .then(response => response.json())
         .then(() => {
             loadMaletines();
-            if (appState.currentSection === 'dashboard') {
+            if (currentSection === 'dashboard') {
                 loadDashboardData();
             }
         })
@@ -835,6 +998,8 @@ function registrarEntrega(id) {
         });
     }
 }
+
+
 
 // Logout
 function logout() {

@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.Maletin;
 import com.example.demo.entity.Disco;
+import com.example.demo.entity.EstadoMaletin;
 import com.example.demo.service.MaletinService;
 import com.example.demo.service.DiscoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,12 @@ public class MaletinController {
     @GetMapping("/cajero/{cajero}")
     public ResponseEntity<List<Maletin>> getMaletinesByCajero(@PathVariable String cajero) {
         List<Maletin> maletines = maletinService.findByCajero(cajero);
+        return ResponseEntity.ok(maletines);
+    }
+    
+    @GetMapping("/sucursal/{sucursal}")
+    public ResponseEntity<List<Maletin>> getMaletinesBySucursal(@PathVariable String sucursal) {
+        List<Maletin> maletines = maletinService.findBySucursal(sucursal);
         return ResponseEntity.ok(maletines);
     }
 
@@ -100,6 +107,51 @@ public class MaletinController {
             return ResponseEntity.ok(maletin);
         } else {
             return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/estado/{estado}")
+    public ResponseEntity<List<Maletin>> getMaletinesByEstado(@PathVariable EstadoMaletin estado) {
+        List<Maletin> maletines = maletinService.findByEstado(estado);
+        return ResponseEntity.ok(maletines);
+    }
+    
+    @GetMapping("/filtrar")
+    public ResponseEntity<List<Maletin>> filtrarMaletines(
+            @RequestParam(required = false) String cliente,
+            @RequestParam(required = false) String sucursal,
+            @RequestParam(required = false) String cajero,
+            @RequestParam(required = false) EstadoMaletin estado) {
+        List<Maletin> maletines = maletinService.filtrarMaletines(cliente, sucursal, cajero, estado);
+        return ResponseEntity.ok(maletines);
+    }
+    
+    @PatchMapping(value = "/{id}/cambiar-estado", consumes = {"application/json", "text/plain"})
+    public ResponseEntity<Maletin> cambiarEstadoPatch(@PathVariable Long id, @RequestBody String nuevoEstado) {
+        return cambiarEstadoInterno(id, nuevoEstado);
+    }
+    
+    @PutMapping(value = "/{id}/cambiar-estado", consumes = {"application/json", "text/plain"})
+    public ResponseEntity<Maletin> cambiarEstadoPut(@PathVariable Long id, @RequestBody String nuevoEstado) {
+        return cambiarEstadoInterno(id, nuevoEstado);
+    }
+    
+    private ResponseEntity<Maletin> cambiarEstadoInterno(Long id, String nuevoEstado) {
+        try {
+            System.out.println("DEBUG: Valor recibido: '" + nuevoEstado + "'");
+            // Remover comillas si están presentes
+            String estadoLimpio = nuevoEstado.replaceAll("\"", "");
+            System.out.println("DEBUG: Valor limpio: '" + estadoLimpio + "'");
+            EstadoMaletin estado = EstadoMaletin.valueOf(estadoLimpio);
+            Maletin maletin = maletinService.cambiarEstado(id, estado);
+            if (maletin != null) {
+                return ResponseEntity.ok(maletin);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR: No se pudo convertir '" + nuevoEstado + "' a EstadoMaletin. Error: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 }
